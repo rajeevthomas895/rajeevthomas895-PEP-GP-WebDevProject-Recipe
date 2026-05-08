@@ -174,6 +174,11 @@ window.addEventListener("DOMContentLoaded", () => {
      */
     async function deleteRecipe() {
         // Implement delete logic here
+        if (sessionStorage.getItem("is-admin") !== "true") {
+            alert("Unauthorized");
+            return;
+        }
+
         const name = deleteRecipeNameInput.value.trim();
         const recipe = recipes.find(r => r.name === name);
 
