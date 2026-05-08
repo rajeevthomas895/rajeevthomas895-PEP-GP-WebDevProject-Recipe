@@ -90,9 +90,7 @@ async function processLogin() {
             sessionStorage.setItem("is-admin", isAdmin);
 
             // TODO: Optionally show the logout button if applicable
-            if (logoutButton) {
-                logoutButton.hidden = false;
-            }
+            logoutButton.hidden = false;
 
             // TODO: Add a small delay (e.g., 500ms) using setTimeout before redirecting
             // - Use window.location.href to redirect to the recipe page
