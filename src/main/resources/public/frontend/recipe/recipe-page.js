@@ -16,14 +16,33 @@ window.addEventListener("DOMContentLoaded", () => {
      * - Admin link and logout button
      * - Search input
     */
+    const addRecipeNameInput = document.getElementById("add-recipe-name-input");
+    const addRecipeInstructionsInput = document.getElementById("add-recipe-instructions-input");
+    const updateRecipeNameInput = document.getElementById("update-recipe-name-input");
+    const updateRecipeInstructionsInput = document.getElementById("update-recipe-instructions-input");
+    const deleteRecipeNameInput = document.getElementById("delete-recipe-name-input");
+    const recipeList = document.getElementById("recipe-list");
+    const adminLink = document.getElementById("admin-link");
+    const logoutButton = document.getElementById("logout-button");
+    const searchInput = document.getElementById("search-input");
+    const addRecipeButton = document.getElementById("add-recipe-submit-input");
+    const updateRecipeButton = document.getElementById("update-recipe-submit-input");
+    const deleteRecipeButton = document.getElementById("delete-recipe-submit-input");
+    const searchButton = document.getElementById("search-button");
 
     /*
      * TODO: Show logout button if auth-token exists in sessionStorage
      */
+    if (sessionStorage.getItem("auth-token")) {
+        logoutButton.hidden = false;
+    }
 
     /*
      * TODO: Show admin link if is-admin flag in sessionStorage is "true"
      */
+    if (sessionStorage.getItem("is-admin") === "true") {
+        adminLink.hidden = false;
+    }
 
     /*
      * TODO: Attach event handlers
@@ -33,10 +52,16 @@ window.addEventListener("DOMContentLoaded", () => {
      * - Search button → searchRecipes()
      * - Logout button → processLogout()
      */
+    addRecipeButton.addEventListener("click", addRecipe);
+    updateRecipeButton.addEventListener("click", updateRecipe);
+    deleteRecipeButton.addEventListener("click", deleteRecipe);
+    searchButton.addEventListener("click", searchRecipes);
+    logoutButton.addEventListener("click", processLogout);
 
     /*
      * TODO: On page load, call getRecipes() to populate the list
      */
+    getRecipes();
 
 
     /**
@@ -48,6 +73,18 @@ window.addEventListener("DOMContentLoaded", () => {
      */
     async function searchRecipes() {
         // Implement search logic here
+        const searchTerm = searchInput.value.trim().toLowerCase();
+
+        if (!searchTerm) {
+            refreshRecipeList();
+            return;
+        }
+
+        const filteredRecipes = recipes.filter(recipe =>
+            recipe.name.toLowerCase().includes(searchTerm)
+        );
+
+        refreshRecipeList(filteredRecipes);
     }
 
     /**
@@ -60,6 +97,28 @@ window.addEventListener("DOMContentLoaded", () => {
      */
     async function addRecipe() {
         // Implement add logic here
+        const name = addRecipeNameInput.value.trim();
+        const instructions = addRecipeInstructionsInput.value.trim();
+
+        if (!name || !instructions) {
+            alert("Fill in all fields");
+            return;
+        }
+
+        const response = await fetch(`${BASE_URL}/recipes`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + sessionStorage.getItem("auth-token")
+            },
+            body: JSON.stringify({ name, instructions })
+        });
+
+        if (response.ok) {
+            addRecipeNameInput.value = "";
+            addRecipeInstructionsInput.value = "";
+            await getRecipes();
+        }
     }
 
     /**
@@ -72,6 +131,38 @@ window.addEventListener("DOMContentLoaded", () => {
      */
     async function updateRecipe() {
         // Implement update logic here
+        const name = updateRecipeNameInput.value.trim();
+        const instructions = updateRecipeInstructionsInput.value.trim();
+
+        if (!name || !instructions) {
+            alert("Fill in all fields");
+            return;
+        }
+
+        const recipe = recipes.find(r => r.name === name);
+
+        if (!recipe) {
+            alert("Recipe not found");
+            return;
+        }
+
+        const response = await fetch(`${BASE_URL}/recipes/${recipe.id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + sessionStorage.getItem("auth-token")
+            },
+            body: JSON.stringify({
+                name: recipe.name,
+                instructions: instructions
+            })
+        });
+
+        if (response.ok) {
+            updateRecipeNameInput.value = "";
+            updateRecipeInstructionsInput.value = "";
+            await getRecipes();
+        }
     }
 
     /**
@@ -83,6 +174,25 @@ window.addEventListener("DOMContentLoaded", () => {
      */
     async function deleteRecipe() {
         // Implement delete logic here
+        const name = deleteRecipeNameInput.value.trim();
+        const recipe = recipes.find(r => r.name === name);
+
+        if (!recipe) {
+            alert("Recipe not found");
+            return;
+        }
+
+        const response = await fetch(`${BASE_URL}/recipes/${recipe.id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + sessionStorage.getItem("auth-token")
+            }
+        });
+
+        if (response.ok) {
+            deleteRecipeNameInput.value = "";
+            await getRecipes();
+        }
     }
 
     /**
@@ -93,6 +203,9 @@ window.addEventListener("DOMContentLoaded", () => {
      */
     async function getRecipes() {
         // Implement get logic here
+        const response = await fetch(`${BASE_URL}/recipes`);
+        recipes = await response.json();
+        refreshRecipeList();
     }
 
     /**
@@ -101,8 +214,15 @@ window.addEventListener("DOMContentLoaded", () => {
      * - Create <li> elements for each recipe with name + instructions
      * - Append to list container
      */
-    function refreshRecipeList() {
+    function refreshRecipeList(recipeArray = recipes) {
         // Implement refresh logic here
+        recipeList.innerHTML = "";
+
+        recipeArray.forEach(recipe => {
+            const li = document.createElement("li");
+            li.textContent = `${recipe.name} - ${recipe.instructions}`;
+            recipeList.appendChild(li);
+        });
     }
 
     /**
@@ -114,6 +234,19 @@ window.addEventListener("DOMContentLoaded", () => {
      */
     async function processLogout() {
         // Implement logout logic here
+        const response = await fetch(`${BASE_URL}/logout`, {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + sessionStorage.getItem("auth-token")
+            }
+        });
+
+        if (response.ok) {
+            sessionStorage.clear();
+            window.location.href = "../login/login-page.html";
+        } else {
+            alert("Logout failed");
+        }
     }
 
 });

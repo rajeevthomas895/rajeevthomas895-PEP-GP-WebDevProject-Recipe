@@ -12,20 +12,27 @@ const BASE_URL = "http://localhost:8081"; // backend URL
  * - searchInput (optional for future use)
  * - adminLink (if visible conditionally)
  */
+const addIngredientNameInput = document.getElementById("add-ingredient-name-input");
+const deleteIngredientNameInput = document.getElementById("delete-ingredient-name-input");
+const ingredientListContainer = document.getElementById("ingredient-list");
 
 /* 
  * TODO: Attach 'onclick' events to:
  * - "add-ingredient-submit-button" → addIngredient()
  * - "delete-ingredient-submit-button" → deleteIngredient()
  */
+document.getElementById("add-ingredient-submit-button").onclick = addIngredient;
+document.getElementById("delete-ingredient-submit-button").onclick = deleteIngredient;
 
 /*
  * TODO: Create an array to keep track of ingredients
  */
+let ingredients = [];
 
 /* 
  * TODO: On page load, call getIngredients()
  */
+getIngredients();
 
 
 /**
@@ -41,6 +48,29 @@ const BASE_URL = "http://localhost:8081"; // backend URL
  */
 async function addIngredient() {
     // Implement add ingredient logic here
+    const name = addIngredientNameInput.value.trim();
+
+    if (!name) {
+        alert("Enter ingredient name");
+        return;
+    }
+
+    const response = await fetch(`${BASE_URL}/ingredients`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + sessionStorage.getItem("auth-token")
+        },
+        body: JSON.stringify({ name })
+    });
+
+    if (response.ok) {
+        addIngredientNameInput.value = "";
+        await getIngredients();
+        refreshIngredientList();
+    } else {
+        alert("Could not add ingredient");
+    }
 }
 
 
@@ -55,6 +85,13 @@ async function addIngredient() {
  */
 async function getIngredients() {
     // Implement get ingredients logic here
+    try {
+        const response = await fetch(`${BASE_URL}/ingredients`);
+        ingredients = await response.json();
+        refreshIngredientList();
+    } catch (error) {
+        alert("Could not get ingredients");
+    }
 }
 
 
@@ -71,6 +108,28 @@ async function getIngredients() {
  */
 async function deleteIngredient() {
     // Implement delete ingredient logic here
+    const name = deleteIngredientNameInput.value.trim();
+    const ingredient = ingredients.find(item => item.name === name);
+
+    if (!ingredient) {
+        alert("Ingredient not found");
+        return;
+    }
+
+    const response = await fetch(`${BASE_URL}/ingredients/${ingredient.id}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": "Bearer " + sessionStorage.getItem("auth-token")
+        }
+    });
+
+    if (response.ok) {
+        deleteIngredientNameInput.value = "";
+        await getIngredients();
+        refreshIngredientList();
+    } else {
+        alert("Could not delete ingredient");
+    }
 }
 
 
@@ -86,4 +145,14 @@ async function deleteIngredient() {
  */
 function refreshIngredientList() {
     // Implement ingredient list rendering logic here
+    ingredientListContainer.innerHTML = "";
+
+    ingredients.forEach(ingredient => {
+        const li = document.createElement("li");
+        const p = document.createElement("p");
+
+        p.textContent = ingredient.name;
+        li.appendChild(p);
+        ingredientListContainer.appendChild(li);
+    });
 }
