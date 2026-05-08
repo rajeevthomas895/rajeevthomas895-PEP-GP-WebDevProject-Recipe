@@ -51,7 +51,7 @@ async function processLogin() {
     const password = passwordInput.value.trim();
 
     if (!username || !password) {
-        alert("Incorrect login!");
+        alert("Please fill in all fields");
         return;
     }
 
@@ -83,11 +83,11 @@ async function processLogin() {
         // - Split the string into token and isAdmin flag
         // - Store both in sessionStorage using sessionStorage.setItem()
         if (response.status === 200) {
-            const text = await response.text();
-            const parts = text.split(" ");
+            const responseText = await response.text();
+            const [token, isAdmin] = responseText.split(" ");
 
-            sessionStorage.setItem("auth-token", parts[0]);
-            sessionStorage.setItem("is-admin", parts[1]);
+            sessionStorage.setItem("auth-token", token);
+            sessionStorage.setItem("is-admin", isAdmin);
 
             // TODO: Optionally show the logout button if applicable
             if (logoutButton) {
@@ -108,13 +108,13 @@ async function processLogin() {
         // TODO: For any other status code
         // - Alert the user with a generic error like "Unknown issue!"
         } else {
-            alert("Incorrect login!");
+            alert("Unknown issue!");
         }
 
     } catch (error) {
         // TODO: Handle any network or unexpected errors
         // - Log the error and alert the user
         console.log(error);
-        alert("Incorrect login!");
+        alert("Something went wrong");
     }
 }
